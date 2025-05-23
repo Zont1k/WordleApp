@@ -1,0 +1,119 @@
+﻿@model WordleApp.Models.GameState
+@{
+    ViewData["Title"] = "Wordle Game";
+}
+
+<div class="wordle-container">
+    <header class="game-header">
+        <h1 class="game-title">WORDLE</h1>
+        <div class="game-stats">
+            <div class="stat-box">
+                <span class="stat-label">Очки</span>
+                <span class="stat-value">@Model.Score</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Победы</span>
+                <span class="stat-value">@Model.Wins / @Model.GamesPlayed</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="game-grid">
+        @for (int i = 0; i < 6; i++)
+        {
+            var guess = i < Model.Attempts.Count ? Model.Attempts[i] : "";
+            <div class="game-row">
+                @for (int j = 0; j < 5; j++)
+                {
+                    var letter = j < guess.Length ? guess[j].ToString() : "";
+                    var correct = j < guess.Length && letter == Model.TargetWord[j].ToString();
+                    var contained = letter != "" && Model.TargetWord.Contains(letter) && !correct;
+                    var style = correct ? "tile-correct" : contained ? "tile-present" : letter != "" ? "tile-absent" : "tile-empty";
+                    <div class="game-tile @style" data-animation="flip" data-delay="@j">
+                        <span class="tile-letter">@letter</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <form asp-action="Guess" method="post" class="guess-form">
+        <input type="text" name="word" maxlength="5" required
+               class="guess-input" placeholder="Введите слово..."
+               pattern="[а-яА-Я]{5}" title="Пожалуйста, введите 5 букв"
+               autocomplete="off" autocapitalize="off" />
+        <button type="submit" class="guess-button">
+            <span>Проверить</span>
+            <svg class="button-icon" viewBox="0 0 24 24">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+            </svg>
+        </button>
+    </form>
+
+    @if (Model.IsWon)
+    {
+        <div class="result-modal show">
+            <div class="modal-content win">
+                <h3>🎉 Победа! 🎉</h3>
+                <p>Вы угадали слово: <strong>@Model.TargetWord</strong></p>
+                <p>Попыток использовано: <strong>@Model.Attempts.Count</strong></p>
+                <p>Получено очков: <strong>+10</strong></p>
+                <form asp-action="Restart" method="post">
+                    <button type="submit" class="restart-button">Играть снова</button>
+                </form>
+            </div>
+        </div>
+    }
+    else if (Model.IsGameOver)
+    {
+        <div class="result-modal show">
+            <div class="modal-content lose">
+                <h3>😢 Игра окончена</h3>
+                <p>Загаданное слово: <strong>@Model.TargetWord</strong></p>
+                <p>Попробуйте ещё раз!</p>
+                <form asp-action="Restart" method="post">
+                    <button type="submit" class="restart-button">Новая игра</button>
+                </form>
+            </div>
+        </div>
+    }
+
+    <form asp-action="Restart" method="post" class="restart-form">
+        <button type="submit" class="restart-button small">
+            <svg viewBox="0 0 24 24" class="restart-icon">
+                <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"></path>
+            </svg>
+            Новая игра
+        </button>
+    </form>
+
+    <div class="keyboard">
+        <div class="keyboard-row">
+            @foreach (var letter in "йцукенгшщзхъ")
+            {
+                <button class="keyboard-key" data-key="@letter">@letter</button>
+            }
+        </div>
+        <div class="keyboard-row">
+            @foreach (var letter in "фывапролджэ")
+            {
+                <button class="keyboard-key" data-key="@letter">@letter</button>
+            }
+        </div>
+        <div class="keyboard-row">
+            <button class="keyboard-key wide" data-action="submit">↵ Ввод</button>
+            @foreach (var letter in "ячсмитьбю")
+            {
+                <button class="keyboard-key" data-key="@letter">@letter</button>
+            }
+            <button class="keyboard-key wide" data-action="backspace">
+                <svg viewBox="0 0 24 24" class="backspace-icon">
+                    <path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7.07L2.4 12l4.66-7H22v14zm-11.59-2L14 13.41 17.59 17 19 15.59 15.41 12 19 8.41 17.59 7 14 10.59 10.41 7 9 8.41 12.59 12 9 15.59z"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="~/css/style.css" />
+<script src="~/js/script.js"></script>
